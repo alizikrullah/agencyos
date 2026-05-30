@@ -1,0 +1,48 @@
+# Cloud Build pipeline untuk AgencyOS — pass VITE_* env vars sebagai docker --build-arg
+# supaya Vite bisa bake-nya ke bundle saat npm run build.
+
+steps:
+  # 1. Build container image dengan build args dari substitutions
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'VITE_NEON_DATABASE_URL=${_VITE_NEON_DATABASE_URL}'
+      - '--build-arg'
+      - 'VITE_GEMINI_API_KEY=${_VITE_GEMINI_API_KEY}'
+      - '-t'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+      - '.'
+
+  # 2. Push image ke Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+
+  # 3. Deploy image ke Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'agencyos'
+      - '--image'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+      - '--region'
+      - 'asia-southeast2'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+
+# Substitution variables — nilai aslinya di-set di Cloud Build Trigger UI.
+# Jangan isi nilai aslinya di sini (akan ke-commit ke GitHub publik!).
+substitutions:
+  _VITE_NEON_DATABASE_URL: ''
+  _VITE_GEMINI_API_KEY: ''
+
+options:
+  logging: CLOUD_LOGGING_ONLY
