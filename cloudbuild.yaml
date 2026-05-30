@@ -1,23 +1,28 @@
 steps:
-  # 1. Build image dengan memasukkan argumen env untuk Vite
+  # 1. Bikin file .env fisik sebelum docker build, agar Vite PASTI membacanya
+  - name: 'ubuntu'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "VITE_NEON_DATABASE_URL=$_DATABASE_URL" > .env
+        echo "VITE_GEMINI_API_KEY=$_GEMINI_KEY" >> .env
+
+  # 2. Build image (argumen --build-arg sudah kita hapus karena pakai .env)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '-t'
       - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
-      - '--build-arg'
-      - 'VITE_NEON_DATABASE_URL=$_DATABASE_URL'
-      - '--build-arg'
-      - 'VITE_GEMINI_API_KEY=$_GEMINI_KEY'
       - '.'
 
-  # 2. Push image ke Artifact Registry (pakai folder asli Cloud Run)
+  # 3. Push image ke Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
 
-  # 3. Deploy image ke Cloud Run
+  # 4. Deploy image ke Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
