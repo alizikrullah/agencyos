@@ -1,28 +1,26 @@
 steps:
-  # 1. Bikin file .env fisik sebelum docker build, agar Vite PASTI membacanya
-  - name: 'ubuntu'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        echo "VITE_NEON_DATABASE_URL=$_DATABASE_URL" > .env
-        echo "VITE_GEMINI_API_KEY=$_GEMINI_KEY" >> .env
-
-  # 2. Build image (argumen --build-arg sudah kita hapus karena pakai .env)
+  # 1. Build image — inject env VITE_* sebagai --build-arg.
+  #    Vite "membakar" nilainya ke bundle saat `npm run build` di dalam Docker.
+  #    Nama substitution disamakan dgn yg di-set pada trigger:
+  #      _NEON_DATABASE_URL  &  _GEMINI_API_KEY
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
+      - '--build-arg'
+      - 'VITE_NEON_DATABASE_URL=$_NEON_DATABASE_URL'
+      - '--build-arg'
+      - 'VITE_GEMINI_API_KEY=$_GEMINI_API_KEY'
       - '-t'
-      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:latest'
       - '.'
 
-  # 3. Push image ke Artifact Registry
+  # 2. Push image ke Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:latest'
 
-  # 4. Deploy image ke Cloud Run
+  # 3. Deploy image ke Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -30,7 +28,7 @@ steps:
       - 'deploy'
       - 'agencyos'
       - '--image'
-      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:latest'
       - '--region'
       - 'asia-southeast2'
       - '--platform'
@@ -38,11 +36,14 @@ steps:
       - '--allow-unauthenticated'
 
 images:
-  - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+  - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:latest'
 
 substitutions:
-  _DATABASE_URL: ''
-  _GEMINI_KEY: ''
+  _NEON_DATABASE_URL: ''
+  _GEMINI_API_KEY: ''
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  # Trigger membawa variable bawaan (_AR_*, _SERVICE_NAME, dll) yg tak dipakai
+  # config ini — ALLOW_LOOSE supaya build tidak error karena variable nganggur.
+  substitution_option: 'ALLOW_LOOSE'
