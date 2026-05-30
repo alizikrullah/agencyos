@@ -1,0 +1,34 @@
+# Dependencies & build output (akan di-install/build ulang dalam image)
+node_modules
+dist
+dist-ssr
+
+# Environment files (env vars masuk via --build-arg, jangan copy file .env)
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Editor / IDE
+.vscode
+.idea
+.DS_Store
+*.swp
+*.swo
+.claude
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker config (nggak perlu di-copy ke dalam image)
+Dockerfile
+.dockerignore
+
+# Docs / meta (nggak perlu di runtime)
+README.md
+.eslintrc*
+eslint.config.js
