@@ -8,7 +8,7 @@ import { useAiCache, timeAgo } from '../lib/useAiCache'
 import { slugify } from '../lib/slug'
 import MiniMarkdown from '../components/MiniMarkdown'
 import IndustrySelect from '../components/IndustrySelect'
-import type { Client, ClientStatus, ContentItem, ContentStatus, AdCampaign, AdStatus, AdObjective } from '../lib/types'
+import type { Client, ClientStatus, ContentItem, ContentStatus, AdCampaign, AdStatus, AdObjective, Invoice } from '../lib/types'
 
 const fmtDate = (s: string | null) =>
   s ? new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'

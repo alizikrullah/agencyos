@@ -642,7 +642,12 @@ Balas HANYA dengan JSON valid:
 
 Bahasa Indonesia. Recommendation harus spesifik untuk pasar Indonesia.`
   const raw = await geminiComplete(prompt, { temperature: 0.5, maxTokens: 700 })
-  const parsed = parseAiJson(raw)
+  const parsed = parseAiJson<{
+    recommendedPlatforms?: unknown[]
+    recommendedFrequency?: unknown
+    topPillars?: unknown[]
+    benchmark?: unknown
+  }>(raw)
   return {
     recommendedPlatforms: (parsed.recommendedPlatforms ?? []).map((s: unknown) => String(s)),
     recommendedFrequency: String(parsed.recommendedFrequency ?? ''),
@@ -701,8 +706,13 @@ Balas HANYA dengan JSON valid:
 
 Reasons harus berdasarkan data spesifik di atas, bukan generic. Max 3 reasons, max 3 recommendations.`
   const raw = await geminiComplete(prompt, { temperature: 0.3, maxTokens: 600 })
-  const parsed = parseAiJson(raw)
-  const level = (['low', 'medium', 'high'].includes(parsed.level) ? parsed.level : 'medium') as 'low' | 'medium' | 'high'
+  const parsed = parseAiJson<{
+    level?: string
+    score?: unknown
+    reasons?: unknown[]
+    recommendations?: unknown[]
+  }>(raw)
+  const level = (parsed.level && ['low', 'medium', 'high'].includes(parsed.level) ? parsed.level : 'medium') as 'low' | 'medium' | 'high'
   return {
     level,
     score: Math.max(0, Math.min(100, Number(parsed.score) || 50)),
