@@ -2,22 +2,23 @@
 # supaya Vite bisa bake-nya ke bundle saat npm run build.
 
 steps:
-  - name: gcr.io/cloud-builders/docker
+  # 1. Build image dengan memasukkan argumen env untuk Vite
+  - name: 'gcr.io/cloud-builders/docker'
     args:
-      - build
+      - 'build'
       - '-t'
-      - $_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/agencyos/agencyos:$COMMIT_SHA'
       - '--build-arg'
       - 'VITE_NEON_DATABASE_URL=$_DATABASE_URL'
       - '--build-arg'
       - 'VITE_GEMINI_API_KEY=$_GEMINI_KEY'
-      - .
+      - '.'
 
   # 2. Push image ke Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/agencyos/agencyos:$COMMIT_SHA'
 
   # 3. Deploy image ke Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -27,7 +28,7 @@ steps:
       - 'deploy'
       - 'agencyos'
       - '--image'
-      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+      - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/agencyos/agencyos:$COMMIT_SHA'
       - '--region'
       - 'asia-southeast2'
       - '--platform'
@@ -35,13 +36,13 @@ steps:
       - '--allow-unauthenticated'
 
 images:
-  - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/agencyos:$COMMIT_SHA'
+  - 'asia-southeast2-docker.pkg.dev/$PROJECT_ID/agencyos/agencyos:$COMMIT_SHA'
 
-# Substitution variables — nilai aslinya di-set di Cloud Build Trigger UI.
-# Jangan isi nilai aslinya di sini (akan ke-commit ke GitHub publik!).
+# Substitution variables — mendeklarasikan variabel kosong sebagai wadah penampung.
+# Nilai aslinya wajib di-set di Dashboard Cloud Build Trigger UI (agar aman dari GitHub publik).
 substitutions:
-  _VITE_NEON_DATABASE_URL: ''
-  _VITE_GEMINI_API_KEY: ''
+  _DATABASE_URL: ''
+  _GEMINI_KEY: ''
 
 options:
   logging: CLOUD_LOGGING_ONLY
